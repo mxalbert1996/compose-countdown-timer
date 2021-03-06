@@ -17,18 +17,18 @@ package com.mxalbert.compose.countdowntimer
 
 import android.content.res.Configuration
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowInsetsControllerCompat
 import com.mxalbert.compose.countdowntimer.ui.CountdownTimerApp
 import com.mxalbert.compose.countdowntimer.ui.theme.MyTheme
 import dev.chrisbanes.accompanist.insets.ProvideWindowInsets
 import timber.log.Timber
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     companion object {
         init {
-            Timber.plant(Timber.DebugTree())
+            if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
         }
     }
 

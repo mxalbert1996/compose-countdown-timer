@@ -31,7 +31,8 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -45,7 +46,7 @@ android {
         compose true
 
         // Disable unused AGP features
-        buildConfig false
+        buildConfig true
         aidl false
         renderScript false
         resValues false
@@ -65,16 +66,13 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.core:core-ktx:1.5.0-beta02'
     implementation "androidx.activity:activity-compose:1.3.0-alpha03"
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.ui:ui-util:$compose_version"
     implementation "androidx.compose.material:material:$compose_version"
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
     implementation "androidx.compose.ui:ui-tooling:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0'
     implementation "dev.chrisbanes.accompanist:accompanist-insets:0.6.1"
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
