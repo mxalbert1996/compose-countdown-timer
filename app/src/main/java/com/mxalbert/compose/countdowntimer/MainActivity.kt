@@ -26,7 +26,6 @@ import dev.chrisbanes.accompanist.insets.ProvideWindowInsets
 import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
-
     companion object {
         init {
             Timber.plant(Timber.DebugTree())
@@ -56,5 +55,4 @@ class MainActivity : AppCompatActivity() {
         WindowInsetsControllerCompat(window, window.decorView)
             .isAppearanceLightStatusBars = !isDarkMode
     }
-
 }
