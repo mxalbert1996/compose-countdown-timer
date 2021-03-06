@@ -108,9 +108,14 @@ private fun BottomButtonArea(state: AppState) {
         AnimatedFab(state)
         IconButton(
             onClick = {
-                state.isCountingDown = false
-                state.resetMillisPassed = true
-                state.resetCountdownTime = true
+                if (state.isCountingDown) {
+                    state.resetMillisPassed = true
+                    state.resetCountdownTime = true
+                    state.isCountingDown = false
+                } else {
+                    state.countdownTime = 0
+                    state.millisPassed = 0
+                }
                 state.screen = Screen.Edit
             },
             modifier = Modifier.alpha(alpha.value),

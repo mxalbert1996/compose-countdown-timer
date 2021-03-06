@@ -18,7 +18,6 @@ package com.mxalbert.compose.countdowntimer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,7 +44,7 @@ class AppState(
         set(value) {
             _millisPassed = value
             updatedTime = System.currentTimeMillis()
-            if (value == 0 || !isCountingDown) updateProgress = Unit
+            if (value == 0 || !isCountingDown) updateProgress = !updateProgress
         }
 
     var updatedTime: Long = 0
@@ -54,8 +53,8 @@ class AppState(
     var resetMillisPassed: Boolean = false
     var resetCountdownTime: Boolean = false
 
-    // To address progress bar flicker bug
-    var updateProgress: Unit by mutableStateOf(Unit, neverEqualPolicy())
+    // A trigger to address progress bar flicker bug
+    var updateProgress: Boolean by mutableStateOf(false)
         private set
 }
 
