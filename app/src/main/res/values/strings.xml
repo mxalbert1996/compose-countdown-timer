@@ -15,4 +15,8 @@
     <string name="second">SECOND</string>
     <string name="backspace">Backspace</string>
     <string name="start">Start</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
+    <string name="reset">Reset</string>
+    <string name="delete">Delete</string>
 </resources>

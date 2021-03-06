@@ -6,12 +6,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Backspace
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,47 +27,61 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastMap
 import androidx.compose.ui.util.fastSumBy
-import com.mxalbert.compose.countdowntimer.AppState
-import com.mxalbert.compose.countdowntimer.DigitCount
+import com.mxalbert.compose.countdowntimer.*
 import com.mxalbert.compose.countdowntimer.R
-import com.mxalbert.compose.countdowntimer.rememberAppState
-import timber.log.Timber
-
-private const val LastIndex = DigitCount - 1
 
 class EditScreenState(
-    editingSegment: Int = -1
+    editingSegment: Int = -1,
+    segments: Collection<Int> = List(SegmentCount) { 0 }
 ) {
     var editingSegment by mutableStateOf(editingSegment)
+
+    // This is against SSOT principle but is here to support inputting minute/second greater than 60
+    val segments: MutableList<Int> = mutableStateListOf<Int>().apply { addAll(segments) }
 }
 
-private val StateSaver: Saver<EditScreenState, *> = Saver(
-    save = { it.editingSegment },
+private val StateSaver: Saver<EditScreenState, *> = listSaver(
+    save = { listOf(it.editingSegment) + it.segments },
     restore = {
         EditScreenState(
-            editingSegment = it
+            editingSegment = it[0],
+            segments = it.subList(1, it.size)
         )
     }
 )
 
+val EditScreenState.digits: MutableList<Int>
+    get() = mutableListOf<Int>().also { list ->
+        segments.flatMapTo(list) { listOf(it / 10, it % 10) }
+    }
+
+fun EditScreenState.setSegmentsFrom(digits: List<Int>) {
+    for (i in segments.indices) {
+        segments[i] = digits[i * 2] * 10 + digits[i * 2 + 1]
+    }
+}
+
+fun EditScreenState.clearSegments() {
+    for (i in segments.indices) {
+        segments[i] = 0
+    }
+}
+
 @Composable
-fun EditScreen(state: AppState, modifier: Modifier = Modifier) {
+fun EditScreen(state: AppState) {
     val screenState = rememberSaveable(saver = StateSaver) { EditScreenState() }
     val widths = remember { IntArray(3) }
-    SubcomposeLayout(modifier = modifier) { constraints ->
-        Timber.d("Constraints: $constraints")
+    SubcomposeLayout { constraints ->
         val relaxedConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val time = subcompose(Component.Time) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                state.timeSegments
-                    .chunked(2) { it[0] * 10 + it[1] }
-                    .forEachIndexed { i, number ->
-                        if (i > 0) TimeDivider()
-                        TimeSegment(screenState, i, number) { widths[i] = it }
-                    }
+                screenState.segments.forEachIndexed { i, digit ->
+                    if (i > 0) TimeDivider()
+                    TimeSegment(screenState, i, digit) { widths[i] = it }
+                }
             }
         }.first().measure(relaxedConstraints)
         val narrowConstraints = relaxedConstraints.copy(maxWidth = time.width)
@@ -114,25 +126,17 @@ fun EditScreen(state: AppState, modifier: Modifier = Modifier) {
     }
 }
 
-private enum class Component { Time, Labels, ButtonPad, Fab }
-
-@Preview(widthDp = 360, heightDp = 640)
-@Composable
-fun EditScreenPreview() {
-    Preview {
-        EditScreen(state = rememberAppState())
-    }
-}
+private enum class Component { Time, Labels, ButtonPad }
 
 @Composable
 private fun TimeSegment(
     screenState: EditScreenState,
     index: Int,
-    number: Int,
+    digit: Int,
     onLayout: (width: Int) -> Unit
 ) {
     Text(
-        text = "%02d".format(number),
+        text = "%02d".format(digit),
         modifier = Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
@@ -181,16 +185,16 @@ private fun Density.ButtonPad(
                         onClick = { screenState.onBackspacePressed(state) }
                     ) {
                         Icon(
-                            Icons.Outlined.Backspace,
-                            contentDescription = stringResource(R.string.backspace),
+                            Icon.Backspace.image,
+                            contentDescription = stringResource(Icon.Backspace.contentDescription),
                             modifier = Modifier.size(28.sp.toDp())
                         )
                     }
                 } else {
-                    val number = if (i == 3) 0 else i * 3 + j + 1
-                    RoundButton(onClick = { screenState.onNumberPressed(state, number) }) {
+                    val digit = if (i == 3) 0 else i * 3 + j + 1
+                    RoundButton(onClick = { screenState.onDigitPressed(state, digit) }) {
                         Text(
-                            text = number.toString(),
+                            text = digit.toString(),
                             style = MaterialTheme.typography.h4
                         )
                     }
@@ -223,47 +227,45 @@ private fun Density.RoundButton(
     )
 }
 
-private fun EditScreenState.calculateIndices(state: AppState): Triple<Int, Int, Int> {
+private fun EditScreenState.calculateIndices(digits: List<Int>): Triple<Int, Int, Int> {
     val leftMostIndex = if (editingSegment >= 0) editingSegment * 2 else 0
-    val rightMostIndex = if (editingSegment >= 0) leftMostIndex + 1 else LastIndex
+    val rightMostIndex = if (editingSegment >= 0) leftMostIndex + 1 else DigitCount - 1
     var index = leftMostIndex
-    while (index <= rightMostIndex && state.timeSegments[index] == 0) index++
+    while (index <= rightMostIndex && digits[index] == 0) index++
     return Triple(leftMostIndex, rightMostIndex, index)
 }
 
-private fun EditScreenState.onNumberPressed(state: AppState, number: Int) {
-    val (leftMostIndex, rightMostIndex, index) = calculateIndices(state)
+private fun EditScreenState.onDigitPressed(state: AppState, digit: Int) {
+    val digits = digits
+    val (leftMostIndex, rightMostIndex, index) = calculateIndices(digits)
     if (index > leftMostIndex) {
         for (i in index - 1 until rightMostIndex) {
-            state.timeSegments[i] = state.timeSegments[i + 1]
+            digits[i] = digits[i + 1]
         }
-        state.timeSegments[rightMostIndex] = number
-        if (number > 0) {
-            state.fabIcon = Icons.Filled.PlayArrow
-        }
+        digits[rightMostIndex] = digit
+        setSegmentsFrom(digits)
+        state.setTimeFrom(segments)
     }
 }
 
 private fun EditScreenState.onBackspacePressed(state: AppState) {
-    val (_, rightMostIndex, index) = calculateIndices(state)
+    val digits = digits
+    val (_, rightMostIndex, index) = calculateIndices(digits)
     if (index <= rightMostIndex) {
         for (i in rightMostIndex downTo index + 1) {
-            state.timeSegments[i] = state.timeSegments[i - 1]
+            digits[i] = digits[i - 1]
         }
-        state.timeSegments[index] = 0
-        if (state.timeSegments.all { it == 0 }) {
-            editingSegment = -1
-            state.fabIcon = null
-        }
+        digits[index] = 0
+        setSegmentsFrom(digits)
+        state.setTimeFrom(segments)
     }
+    if (state.countdownTime == 0) editingSegment = -1
 }
 
 private fun EditScreenState.onBackspaceLongPressed(state: AppState) {
-    for (i in state.timeSegments.indices) {
-        state.timeSegments[i] = 0
-    }
+    clearSegments()
+    state.countdownTime = 0
     editingSegment = -1
-    state.fabIcon = null
 }
 
 private val Labels = intArrayOf(
@@ -273,3 +275,19 @@ private val Labels = intArrayOf(
 )
 
 private val ButtonSize = 64.sp
+
+@Preview(widthDp = 360, heightDp = 640)
+@Composable
+fun EditScreenPreview() {
+    Preview {
+        EditScreen(state = rememberAppState())
+    }
+}
+
+@Preview(widthDp = 360, heightDp = 640)
+@Composable
+fun EditScreenDarkPreview() {
+    Preview(darkTheme = true) {
+        EditScreen(state = rememberAppState())
+    }
+}
