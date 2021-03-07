@@ -19,6 +19,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.mxalbert.compose.countdowntimer.ui.CountdownTimerApp
 import com.mxalbert.compose.countdowntimer.ui.theme.MyTheme
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setupStatusBar(resources.configuration)
         setContent {
             MyTheme {
