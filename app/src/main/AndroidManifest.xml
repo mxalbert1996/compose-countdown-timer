@@ -21,7 +21,7 @@
         android:theme="@style/Theme.AndroidDevChallenge">
         <activity
             android:name=".MainActivity"
-            android:configChanges="density|fontScale|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode"
+            android:configChanges="density|fontScale|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:theme="@style/Theme.AndroidDevChallenge.Immersive">

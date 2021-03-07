@@ -54,7 +54,7 @@ import dev.chrisbanes.accompanist.insets.systemBarsPadding
 fun CountdownTimerApp(state: AppState = rememberAppState()) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
         Column(
-            modifier = Modifier.systemBarsPadding().fillMaxSize(),
+            modifier = Modifier.systemBarsPadding().padding(bottom = 16.dp).fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(

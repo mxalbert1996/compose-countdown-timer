@@ -11,8 +11,12 @@ A simple countdown timer app. The UI is based on the system countdown timer in O
 <!--- Optionally point readers to interesting parts of your submission. -->
 <!--- What are you especially proud of? -->
 
-This is my first app made completely by Compose UI.
+This is my first app built completely by Compose UI.
 Jetpack Compose allowed me to build the UI, especially the animation, with much simpler code.
+
+One of things I like the most about Compose UI is that any configuration change can be handled by it.
+This means that there is [no need to recreate activity](app/src/main/AndroidManifest.xml#L24),
+which can simplify the code, improve performance and provide a better user experience.
 
 ## :camera_flash: Screenshots
 

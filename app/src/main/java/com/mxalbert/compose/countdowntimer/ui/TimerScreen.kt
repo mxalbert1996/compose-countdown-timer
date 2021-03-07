@@ -19,6 +19,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.CircleShape
@@ -48,6 +49,7 @@ import com.mxalbert.compose.countdowntimer.progress
 import com.mxalbert.compose.countdowntimer.timeSegments
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 @Composable
 fun TimerScreen(state: AppState) {
@@ -82,23 +84,35 @@ fun TimerScreen(state: AppState) {
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val circleSize: Float
+        val modifier = if (constraints.maxHeight >= constraints.maxWidth) {
+            circleSize = constraints.maxWidth * CircleSizeFractionPortrait
+            Modifier.fillMaxWidth(fraction = CircleSizeFractionPortrait)
+        } else {
+            val fraction = 0.8f
+            circleSize = constraints.maxHeight * CircleSizeFractionLandscape
+            Modifier.fillMaxHeight(fraction = CircleSizeFractionLandscape)
+        }
         Surface(
-            modifier = Modifier.fillMaxWidth(0.64f).aspectRatio(1f),
+            modifier = modifier.aspectRatio(1f),
             shape = CircleShape,
             elevation = 4.dp
         ) {
-            Countdown(state)
+            Countdown(state, circleSize.roundToInt())
         }
     }
 }
 
+private const val CircleSizeFractionPortrait = 0.64f
+private const val CircleSizeFractionLandscape = 0.8f
+
 @Composable
-private fun Countdown(state: AppState) {
-    BoxWithConstraints(contentAlignment = Alignment.Center) {
+private fun Countdown(state: AppState, circleSize: Int) {
+    Box(contentAlignment = Alignment.Center) {
         val alpha by produceState(1f) {
             while (true) {
                 delay(500)
@@ -143,7 +157,7 @@ private fun Countdown(state: AppState) {
             style = TextStyle(
                 fontWeight = FontWeight.Normal,
                 fontSize = with(LocalDensity.current) {
-                    (constraints.maxWidth * 0.18f).toSp()
+                    (circleSize * 0.18f).toSp()
                 },
                 letterSpacing = 0.sp
             )

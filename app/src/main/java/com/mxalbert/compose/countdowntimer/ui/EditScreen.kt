@@ -53,7 +53,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
@@ -65,6 +67,8 @@ import com.mxalbert.compose.countdowntimer.R
 import com.mxalbert.compose.countdowntimer.SegmentCount
 import com.mxalbert.compose.countdowntimer.rememberAppState
 import com.mxalbert.compose.countdowntimer.setTimeFrom
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 class EditScreenState(
     editingSegment: Int = -1,
@@ -108,6 +112,7 @@ fun EditScreen(state: AppState) {
     val screenState = rememberSaveable(saver = StateSaver) { EditScreenState() }
     val widths = remember { IntArray(3) }
     SubcomposeLayout { constraints ->
+        val isPortrait = constraints.maxHeight >= constraints.maxWidth
         val relaxedConstraints = constraints.copy(minWidth = 0, minHeight = 0)
         val time = subcompose(Component.Time) {
             Row(
@@ -140,23 +145,41 @@ fun EditScreen(state: AppState) {
             }
         }.first().measure(narrowConstraints)
 
-        val buttonPad = subcompose(Component.ButtonPad) { ButtonPad(state, screenState) }
-            .fastMap { it.measure(narrowConstraints) }
-
-        val width = time.width
-        val x = (constraints.maxWidth - width) / 2
-        val contentHeight = time.height + labels.height + buttonPad.fastSumBy { it.height }
-        val margin = (constraints.maxHeight - contentHeight) / 3
+        val buttonPadConstraints = if (isPortrait) narrowConstraints else
+            relaxedConstraints.copy(maxWidth = (constraints.maxWidth / 2 * 0.8f).roundToInt())
+        val buttonPad = subcompose(Component.ButtonPad) {
+            ButtonPad(state, screenState, buttonPadConstraints)
+        }.fastMap { it.measure(buttonPadConstraints) }
+        val buttonPadHeight = buttonPad.fastSumBy { it.height }
 
         layout(constraints.maxWidth, constraints.maxHeight) {
-            var y = margin
-            time.place(x, y)
-            y += time.height
-            labels.place(x, y)
-            y += labels.height + margin
-            buttonPad.fastForEach {
-                it.place(x, y)
-                y += it.height
+            if (isPortrait) {
+                val width = time.width
+                val x = (constraints.maxWidth - width) / 2
+                val contentHeight = time.height + labels.height + buttonPadHeight
+                val margin = (constraints.maxHeight - contentHeight) / 3
+                var y = margin
+                time.place(x, y)
+                y += time.height
+                labels.place(x, y)
+                y += labels.height + margin
+                buttonPad.fastForEach {
+                    it.place(x, y)
+                    y += it.height
+                }
+            } else {
+                val halfWidth = constraints.maxWidth / 2
+                val height = constraints.maxHeight
+                val margin = (height - time.height - labels.height) / 2
+                var x = ((halfWidth - time.width) * 0.75).roundToInt()
+                time.place(x, margin)
+                labels.place(x, margin + time.height)
+                x = (halfWidth + (halfWidth - buttonPadConstraints.maxWidth) * 0.25).roundToInt()
+                var y = (height - buttonPadHeight) / 2
+                buttonPad.fastForEach {
+                    it.place(x, y)
+                    y += it.height
+                }
             }
         }
     }
@@ -205,8 +228,10 @@ private fun TimeDivider() {
 @Composable
 private fun Density.ButtonPad(
     state: AppState,
-    screenState: EditScreenState
+    screenState: EditScreenState,
+    constraints: Constraints
 ) {
+    val buttonSize = min(64f, (constraints.maxHeight / 4).toDp().value).dp
     for (i in 0 until 4) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -214,9 +239,10 @@ private fun Density.ButtonPad(
         ) {
             for (j in 0 until 3) {
                 if (i == 3 && j == 0) {
-                    Spacer(modifier = Modifier.size(ButtonSize.toDp()))
+                    Spacer(modifier = Modifier.size(buttonSize))
                 } else if (i == 3 && j == 2) {
                     RoundButton(
+                        size = buttonSize,
                         onLongClick = { screenState.onBackspaceLongPressed(state) },
                         onClick = { screenState.onBackspacePressed(state) }
                     ) {
@@ -228,7 +254,10 @@ private fun Density.ButtonPad(
                     }
                 } else {
                     val digit = if (i == 3) 0 else i * 3 + j + 1
-                    RoundButton(onClick = { screenState.onDigitPressed(state, digit) }) {
+                    RoundButton(
+                        size = buttonSize,
+                        onClick = { screenState.onDigitPressed(state, digit) }
+                    ) {
                         Text(
                             text = digit.toString(),
                             style = MaterialTheme.typography.h4
@@ -242,17 +271,18 @@ private fun Density.ButtonPad(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Density.RoundButton(
+private fun RoundButton(
+    size: Dp,
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
-        modifier = Modifier.size(ButtonSize.toDp()).combinedClickable(
+        modifier = Modifier.size(size).combinedClickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = rememberRipple(
                 bounded = false,
-                radius = 40.sp.toDp()
+                radius = size * 0.6f
             ),
             role = Role.Button,
             onLongClick = onLongClick,
@@ -309,8 +339,6 @@ private val Labels = intArrayOf(
     R.string.minute,
     R.string.second
 )
-
-private val ButtonSize = 64.sp
 
 @Preview(widthDp = 360, heightDp = 640)
 @Composable
