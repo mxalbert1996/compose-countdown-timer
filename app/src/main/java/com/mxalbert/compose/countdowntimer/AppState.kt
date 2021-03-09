@@ -44,7 +44,6 @@ class AppState(
         set(value) {
             _millisPassed = value
             updatedTime = System.currentTimeMillis()
-            if (value == 0 || !isCountingDown) updateProgress = !updateProgress
         }
 
     var updatedTime: Long = 0
@@ -52,10 +51,6 @@ class AppState(
     // To reset millisPassed/countdownTime after timer coroutine is canceled
     var resetMillisPassed: Boolean = false
     var resetCountdownTime: Boolean = false
-
-    // A trigger to address progress bar flicker bug
-    var updateProgress: Boolean by mutableStateOf(false)
-        private set
 }
 
 private val Saver: Saver<AppState, *> = listSaver(

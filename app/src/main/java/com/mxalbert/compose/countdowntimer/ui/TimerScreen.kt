@@ -93,7 +93,6 @@ fun TimerScreen(state: AppState) {
             circleSize = constraints.maxWidth * CircleSizeFractionPortrait
             Modifier.fillMaxWidth(fraction = CircleSizeFractionPortrait)
         } else {
-            val fraction = 0.8f
             circleSize = constraints.maxHeight * CircleSizeFractionLandscape
             Modifier.fillMaxHeight(fraction = CircleSizeFractionLandscape)
         }
@@ -121,7 +120,7 @@ private fun Countdown(state: AppState, circleSize: Int) {
         }
 
         val color = MaterialTheme.colors.primary
-        val fraction by produceState(0f, state.isCountingDown, state.updateProgress) {
+        val fraction by produceState(0f, state.isCountingDown, state.millisPassed) {
             value = if (state.countdownTime == 0) 0f else state.progress
             if (state.isCountingDown) {
                 val millisFraction = 1f / state.countdownTime / 1000

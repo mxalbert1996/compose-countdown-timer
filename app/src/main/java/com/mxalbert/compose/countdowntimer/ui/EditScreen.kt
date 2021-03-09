@@ -170,12 +170,12 @@ fun EditScreen(state: AppState) {
             } else {
                 val halfWidth = constraints.maxWidth / 2
                 val height = constraints.maxHeight
-                val margin = (height - time.height - labels.height) / 2
+                val margin = ((height - time.height - labels.height) * 0.4).roundToInt()
                 var x = ((halfWidth - time.width) * 0.75).roundToInt()
                 time.place(x, margin)
                 labels.place(x, margin + time.height)
                 x = (halfWidth + (halfWidth - buttonPadConstraints.maxWidth) * 0.25).roundToInt()
-                var y = (height - buttonPadHeight) / 2
+                var y = ((height - buttonPadHeight) * 0.6).roundToInt()
                 buttonPad.fastForEach {
                     it.place(x, y)
                     y += it.height
